@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mapa y Ruta</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mapa y Ruta</h1>
+    
+    <div>
+        <label for="origin">Dirección de origen:</label>
+        <input type="text" id="origin" />
+    </div>
+    
+    <div>
+        <label for="destination">Dirección de destino:</label>
+        <input type="text" id="destination" />
+    </div>
+    
+    <button id="showMapBtn">Mostrar Mapa y Ruta</button>
+
+    <div id="map"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ625gSMXv-5w1upLs4Wr5xxQ5DTxdyss&libraries=places"></script>
+    <script>
+        $(document).ready(function() {
+            var map = L.map('map').setView([0, 0], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(map);
+
+            var originMarker, destinationMarker, directionsService, directionsDisplay;
+
+            $('#showMapBtn').click(function() {
+                var origin = $('#origin').val();
+                var destination = $('#destination').val();
+
+                getCoordinates(origin, function(originCoords) {
+                    if (originMarker) {
+                        map.removeLayer(originMarker);
+                    }
+                    originMarker = L.marker([originCoords.lat, originCoords.lon]).addTo(map);
+                    map.panTo([originCoords.lat, originCoords.lon]);
+                });
+
+                getCoordinates(destination, function(destinationCoords) {
+                    if (destinationMarker) {
+                        map.removeLayer(destinationMarker);
+                    }
+                    destinationMarker = L.marker([destinationCoords.lat, destinationCoords.lon]).addTo(map);
+                    map.panTo([destinationCoords.lat, destinationCoords.lon]);
+                });
+
+                calculateRoute(origin, destination);
+            });
+
+            function getCoordinates(address, callback) {
+                var geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: address }, function(results, status) {
+                    if (status === 'OK' && results.length > 0) {
+                        var location = results[0].geometry.location;
+                        callback({ lat: location.lat(), lon: location.lng() });
+                    } else {
+                        console.log('No se encontraron coordenadas para la dirección:', address);
+                    }
+                });
+            }
+
+            function calculateRoute(origin, destination) {
+                if (!directionsService) {
+                    directionsService = new google.maps.DirectionsService();
+                }
+
+                if (!directionsDisplay) {
+                    directionsDisplay = new L.LayerGroup().addTo(map);
+                } else {
+                    directionsDisplay.clearLayers();
+                }
+
+                var request = {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: 'DRIVING'
+                };
+
+                directionsService.route(request, function(response, status) {
+                    if (status === 'OK') {
+                        var route = L.geoJSON(response.routes[0].overview_polyline).addTo(directionsDisplay);
+                        map.fitBounds(route.getBounds());
+                    } else {
+                        console.log('No se pudo calcular la ruta:', status);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

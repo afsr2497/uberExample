@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autocompletar Direcciones</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ625gSMXv-5w1upLs4Wr5xxQ5DTxdyss&libraries=places"></script>
+</head>
+<body>
+    <h1>Autocompletar Direcciones</h1>
+    
+    <div>
+        <label for="origin">Dirección de origen:</label>
+        <input type="text" id="origin" />
+    </div>
+    
+    <div>
+        <label for="destination">Dirección de destino:</label>
+        <input type="text" id="destination" />
+    </div>
+    
+    <button id="getCoordinatesBtn">Obtener Coordenadas</button>
+
+    <script>
+        var autocompleteOrigin, autocompleteDestination;
+
+        function initAutocomplete() {
+            autocompleteOrigin = new google.maps.places.Autocomplete(document.getElementById('origin'));
+            autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById('destination'));
+        }
+
+        function getCoordinates(address, callback) {
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: address }, function(results, status) {
+                if (status === 'OK' && results.length > 0) {
+                    var location = results[0].geometry.location;
+                    callback({ lat: location.lat(), lon: location.lng() });
+                } else {
+                    console.log('No se encontraron coordenadas para la dirección:', address);
+                }
+            });
+        }
+
+        document.getElementById('getCoordinatesBtn').addEventListener('click', function() {
+            var origin = document.getElementById('origin').value;
+            var destination = document.getElementById('destination').value;
+
+            getCoordinates(origin, function(originCoords) {
+                console.log('Coordenadas de origen:', originCoords);
+            });
+
+            getCoordinates(destination, function(destinationCoords) {
+                console.log('Coordenadas de destino:', destinationCoords);
+            });
+        });
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCQ625gSMXv-5w1upLs4Wr5xxQ5DTxdyss&libraries=places&callback=initAutocomplete" async defer></script>
+</body>
+</html>

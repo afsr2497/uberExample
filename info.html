@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autocompletar Direcciones</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+</head>
+<body>
+    <h1>Autocompletar Direcciones</h1>
+    
+    <div>
+        <label for="origin">Dirección de origen:</label>
+        <input type="text" id="origin" />
+    </div>
+    
+    <div>
+        <label for="destination">Dirección de destino:</label>
+        <input type="text" id="destination" />
+    </div>
+    
+    <button id="getCoordinatesBtn">Obtener Coordenadas</button>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar el autocompletado de direcciones
+            $('#origin, #destination').autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: 'https://nominatim.openstreetmap.org/search',
+                        method: 'GET',
+                        dataType: 'json',
+                        data: {
+                            q: request.term,
+                            format: 'json',
+                            addressdetails: 1
+                        },
+                        success: function(data) {
+                            response(data.map(function(item) {
+                                return item.display_name;
+                            }));
+                        }
+                    });
+                },
+                minLength: 3
+            });
+
+            // Obtener las coordenadas al hacer clic en el botón
+            $('#getCoordinatesBtn').click(function() {
+                var origin = $('#origin').val();
+                var destination = $('#destination').val();
+
+                getCoordinates(origin, function(originCoords) {
+                    console.log('Coordenadas de origen:', originCoords);
+                });
+
+                getCoordinates(destination, function(destinationCoords) {
+                    console.log('Coordenadas de destino:', destinationCoords);
+                });
+            });
+
+            // Función para obtener las coordenadas de una dirección utilizando el servicio de geocodificación
+            function getCoordinates(address, callback) {
+                $.ajax({
+                    url: 'https://nominatim.openstreetmap.org/search',
+                    method: 'GET',
+                    dataType: 'json',
+                    data: {
+                        q: address,
+                        format: 'json',
+                        addressdetails: 1,
+                        limit: 1
+                    },
+                    success: function(data) {
+                        if (data.length > 0) {
+                            var lat = data[0].lat;
+                            var lon = data[0].lon;
+                            callback({ lat: lat, lon: lon });
+                        } else {
+                            console.log('No se encontraron coordenadas para la dirección:', address);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
